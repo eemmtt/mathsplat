@@ -6,6 +6,8 @@ from typing import Tuple, Any
 from dataclasses import dataclass
 import time, array, math
 
+debugging = True
+
 mod = Module()
 mod.list("mathsplat_captures", desc="terms used for dictating math expressions")
 
@@ -93,38 +95,41 @@ def on_draw(c: SkiaCanvas):
 
 
 #Debugging with a Canvas
-screen: ui.Screen = ui.main_screen()
-canvas = Canvas.from_screen(screen)
-canvas.draggable = False
-canvas.blocks_mouse = False
-canvas.focused = False
-canvas.cursor_visible = True
-# Add a callback to specify how the canvas should be drawn
-canvas.register("draw", on_draw)
-canvas.freeze()
-canvas.hide()
+if debugging:
+    screen: ui.Screen = ui.main_screen()
+    canvas = Canvas.from_screen(screen)
+    canvas.draggable = False
+    canvas.blocks_mouse = False
+    canvas.focused = False
+    canvas.cursor_visible = True
+    # Add a callback to specify how the canvas should be drawn
+    canvas.register("draw", on_draw)
+    canvas.freeze()
+    canvas.hide()
 
 @mod.action_class
 class SplatActions:
     def start_splatting() -> None:
         "Starts cron job that processes queue"
-        global splat_job, canvas
+        global splat_job, canvas, debugging
         if splat_job is None:
             splat_job = cron.interval("32ms", on_interval)
 
         #Debugging
-        canvas.show()
+        if debugging:
+            canvas.show()
     
     def stop_splatting() -> None:
         "Stops cron job that processes queue"
-        global splat_job, capture_queue, canvas
+        global splat_job, capture_queue, canvas, debugging
         if splat_job is not None:
             cron.cancel(splat_job)
             splat_job = None
-    
         capture_queue = []
+
         #Debugging
-        canvas.hide()
+        if debugging:
+            canvas.hide()
 
     def push_splat(capture: Capture) -> None:
         "Add splat to global queue"
@@ -143,6 +148,7 @@ class SplatActions:
         pos_x, pos_y = position
         print(capture.term, capture.time, pos_x, pos_y)
 
+        #Actions for TLDRAW text insertion
         actions.key("t")
         actions.mouse_move(x=pos_x, y=pos_y)
         actions.mouse_click()
